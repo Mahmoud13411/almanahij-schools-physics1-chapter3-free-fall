@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تطبيقات الفيزياء - أ/ محمود شفيق</title>
+    <style>
+        /* التنسيق العام الموحد */
+        :root {
+            --primary-color: #2c3e50;
+            --freefall-accent: #e74c3c;
+            --upward-accent: #3498db;
+            --bg-color: #f4f7f6;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* شريط التنقل */
+        .navbar {
+            background-color: var(--primary-color);
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding: 10px 0;
+            gap: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            padding: 10px 25px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background: #34495e;
+            color: white;
+            transition: 0.3s;
+            font-weight: bold;
+        }
+
+        .nav-btn.active {
+            background: white;
+            color: var(--primary-color);
+        }
+
+        /* التحكم في الصفحات */
+        .page {
+            display: none;
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* تنسيقات مشتركة للعناصر */
+        .header-info { text-align: center; margin-bottom: 20px; color: var(--primary-color); line-height: 1.4; }
+        .container { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .problem-card { background: #ecf0f1; padding: 1.5rem; border-right: 5px solid var(--primary-color); margin-bottom: 20px; font-size: 1.2rem; line-height: 1.6; }
+        .simulation-area { position: relative; background: #dfe6e9; border-radius: 10px; overflow: hidden; border: 2px solid #bdc3c7; margin-bottom: 20px; }
+        .ground { position: absolute; bottom: 0; width: 100%; height: 10px; background: #7f8c8d; }
+        .controls { display: flex; gap: 10px; justify-content: center; }
+        button { padding: 10px 25px; font-size: 1rem; cursor: pointer; border: none; border-radius: 5px; transition: 0.3s; font-weight: bold; }
+        .btn-new { background: var(--primary-color); color: white; }
+        .btn-play { background: #27ae60; color: white; }
+        .btn-answer { background: #f39c12; color: white; }
+        button:hover { opacity: 0.9; transform: translateY(-2px); }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .result-box { margin-top: 20px; padding: 1rem; display: none; background: #dff9fb; border-radius: 5px; font-weight: bold; }
+
+        /* تخصيصات المحاكاة */
+        .sim-freefall { height: 300px; }
+        .sim-upward { height: 350px; }
+        .ball { position: absolute; width: 30px; height: 30px; border-radius: 50%; left: 50%; transform: translateX(-50%); display: none; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        #ball1 { background: var(--freefall-accent); top: 10px; }
+        #ball2 { background: #e67e22; bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="navbar">
+    <button class="nav-btn active" onclick="showTab('freefall', this)">السقوط الحر</button>
+    <button class="nav-btn" onclick="showTab('upward', this)">القذف للأعلى</button>
+</div>
+
+<div class="header-info">
+    <h3>شركة عطاء التعليمية</h3>
+    <h3>مدارس المناهج الثانوية بنين</h3>
+    <h3>قسم الفيزياء</h3>
+    <p>إعداد المعلم أ/ محمود شفيق مشرف</p>
+</div>
+
+<div id="freefall" class="page active">
+    <div class="container">
+        <h2 style="text-align: center; color: var(--primary-color);">تدريبات السقوط الحر 🏀</h2>
+        <div class="problem-card" id="problem-text1">اضغط على "مسألة جديدة" للبدء..</div>
+        <div class="simulation-area sim-freefall">
+            <div id="ball1" class="ball"></div>
+            <div class="ground"></div>
+        </div>
+        <div class="controls">
+            <button class="btn-new" onclick="generateFreeFall()">مسألة جديدة</button>
+            <button class="btn-play" id="playBtn1" disabled onclick="animateFreeFall()">تشغيل الأنيميشن</button>
+            <button class="btn-answer" id="showBtn1" disabled onclick="toggleAnswer(1)">إظهار الحل</button>
+        </div>
+        <div class="result-box" id="result1"></div>
+    </div>
+</div>
+
+<div id="upward" class="page">
+    <div class="container">
+        <h2 style="text-align: center; color: var(--primary-color);">تدريبات قذف الأجسام رأسيًا للأعلى 🚀</h2>
+        <div class="problem-card" id="problem-text2">اضغط على "مسألة جديدة" للبدء..</div>
+        <div class="simulation-area sim-upward">
+            <div id="ball2" class="ball"></div>
+            <div class="ground"></div>
+        </div>
+        <div class="controls">
+            <button class="btn-new" onclick="generateUpward()">مسألة جديدة</button>
+            <button class="btn-play" id="playBtn2" disabled onclick="animateUpward()">تشغيل الأنيميشن</button>
+            <button class="btn-answer" id="showBtn2" disabled onclick="toggleAnswer(2)">إظهار الحل</button>
+        </div>
+        <div class="result-box" id="result2"></div>
+    </div>
+</div>
+
+<script>
+    let problem1 = {}, problem2 = {};
+    const g = 9.8;
+
+    // تبديل التبويبات
+    function showTab(tabId, btn) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        btn.classList.add('active');
+    }
+
+    function toggleAnswer(num) {
+        const resBox = document.getElementById('result' + num);
+        const data = num === 1 ? problem1 : problem2;
+        resBox.innerHTML = data.answer;
+        resBox.style.display = resBox.style.display === 'block' ? 'none' : 'block';
+    }
+
+    // --- منطق السقوط الحر ---
+    function generateFreeFall() {
+        const types = ['find_v', 'find_t', 'find_d'];
+        const type = types[Math.floor(Math.random() * 3)];
+        const t = (Math.random() * 4 + 1).toFixed(1);
+        const v = (t * g).toFixed(1);
+        const d = (0.5 * g * Math.pow(t, 2)).toFixed(1);
+
+        document.getElementById('ball1').style.top = '10px';
+        document.getElementById('ball1').style.display = 'block';
+        document.getElementById('result1').style.display = 'none';
+        document.getElementById('playBtn1').disabled = false;
+        document.getElementById('showBtn1').disabled = false;
+
+        if (type === 'find_v') {
+            problem1 = { text: `سقط جسم من السكون سقطاً حراً، فإذا استغرق زمن قدره <b>(${t} s)</b> ليصل إلى الأرض. احسب سرعته النهائية لحظة الاصطدام؟`, answer: `السرعة النهائية (v_f) = g × t <br> v_f = 9.8 × ${t} = <b>${v} m/s</b>`, dur: t };
+        } else if (type === 'find_d') {
+            problem1 = { text: `سقط حجر من قمة مبنى واستغرق <b>(${t} s)</b> ليصل إلى القاعدة. ما هو ارتفاع المبنى؟`, answer: `الارتفاع (d) = ½ × g × t² <br> d = 0.5 × 9.8 × (${t})² = <b>${d} m</b>`, dur: t };
+        } else {
+            problem1 = { text: `إذا سقط جسم من ارتفاع <b>(${d} m)</b> عن سطح الأرض. ما الزمن المستغرق للوصول للأرض؟ (بإهمال مقاومة الهواء)`, answer: `الزمن (t) = √(2d / g) <br> t = √(2 × ${d} / 9.8) = <b>${t} s</b>`, dur: t };
+        }
+        document.getElementById('problem-text1').innerHTML = problem1.text;
+    }
+
+    function animateFreeFall() {
+        const ball = document.getElementById('ball1');
+        ball.style.transition = `top ${problem1.dur}s cubic-bezier(0.5, 0, 1, 0.5)`;
+        setTimeout(() => { ball.style.top = '260px'; }, 10);
+    }
+
+    // --- منطق القذف للأعلى ---
+    function generateUpward() {
+        const types = ['find_max_h', 'find_total_t', 'find_v_initial'];
+        const type = types[Math.floor(Math.random() * 3)];
+        const v_i = (Math.random() * 20 + 15).toFixed(1);
+        const t_up = (v_i / g).toFixed(1);
+        const max_h = (Math.pow(v_i, 2) / (2 * g)).toFixed(1);
+        const total_t = (t_up * 2).toFixed(1);
+
+        const ball = document.getElementById('ball2');
+        ball.style.display = 'block';
+        ball.style.transition = 'none';
+        ball.style.bottom = '10px';
+        document.getElementById('result2').style.display = 'none';
+        document.getElementById('playBtn2').disabled = false;
+        document.getElementById('showBtn2').disabled = false;
+
+        if (type === 'find_max_h') {
+            problem2 = { text: `قُذف جسم رأسيًا للأعلى بسرعة ابتدائية قدرها <b>(${v_i} m/s)</b>. احسب أقصى ارتفاع يصل إليه الجسم؟`, answer: `أقصى ارتفاع (h) = v_i² / 2g <br> h = (${v_i})² / (2 × 9.8) = <b>${max_h} m</b>`, t_up: parseFloat(t_up) };
+        } else if (type === 'find_total_t') {
+            problem2 = { text: `قُذف سهم للأعلى بسرعة ابتدائية <b>(${v_i} m/s)</b>. ما هو الزمن الكلي المستغرق ليعود إلى نقطة القذف؟`, answer: `زمن الصعود (t_up) = v_i / g = ${v_i} / 9.8 = ${t_up} s <br> الزمن الكلي = 2 × زمن الصعود = <b>${total_t} s</b>`, t_up: parseFloat(t_up) };
+        } else {
+            problem2 = { text: `قُذف حجر للأعلى فوصل إلى أقصى ارتفاع قدره <b>(${max_h} m)</b>. ما هي السرعة التي قُذف بها الحجر؟`, answer: `السرعة الابتدائية (v_i) = √(2 × g × h) <br> v_i = √(2 × 9.8 × ${max_h}) = <b>${v_i} m/s</b>`, t_up: parseFloat(t_up) };
+        }
+        document.getElementById('problem-text2').innerHTML = problem2.text;
+    }
+
+    function animateUpward() {
+        const ball = document.getElementById('ball2');
+        const playBtn = document.getElementById('playBtn2');
+        playBtn.disabled = true;
+        ball.style.transition = `bottom ${problem2.t_up}s ease-out`;
+        ball.style.bottom = '300px';
+        setTimeout(() => {
+            ball.style.transition = `bottom ${problem2.t_up}s ease-in`;
+            ball.style.bottom = '10px';
+            setTimeout(() => { playBtn.disabled = false; }, problem2.t_up * 1000);
+        }, problem2.t_up * 1000);
+    }
+</script>
+
+</body>
+</html>
